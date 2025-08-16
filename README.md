@@ -4,16 +4,20 @@ One-command installation scripts for Claude Code across different platforms.
 
 ## 🚀 Quick Start
 
-### WSL2 (Ubuntu on Windows)
+### Personal Setup (Recommended for seanGSISG)
+
+Pre-configured with Git credentials and all features:
+
+```bash
+curl -sSL https://raw.githubusercontent.com/seanGSISG/claude/main/setup/setup-personal.sh | bash
+```
+
+### Standard WSL2 Setup (Ubuntu on Windows)
+
+For general users or custom Git configuration:
 
 ```bash
 curl -sSL https://raw.githubusercontent.com/seanGSISG/claude/main/setup/setup-claude-wsl.sh | bash
-```
-
-Or with wget:
-
-```bash
-wget -qO- https://raw.githubusercontent.com/seanGSISG/claude/main/setup/setup-claude-wsl.sh | bash
 ```
 
 ## 📋 Prerequisites
