@@ -39,6 +39,7 @@ The setup script automatically installs and configures:
   - WSL-specific configurations
   - Memory files for context awareness
   - Helpful aliases and shortcuts
+  - `/new-project` command for quick project scaffolding
 
 - **Docker Integration**
   - Docker CLI for WSL
@@ -94,6 +95,28 @@ curl -sSL https://raw.githubusercontent.com/seanGSISG/claude/main/scripts/verify
 After installation, Claude Code configuration files are located at:
 - Settings: `~/.claude/settings.json`
 - Memory: `~/.claude/CLAUDE.md`
+
+### Project Scaffolding Command
+
+The setup includes a `/new-project` command that creates a standardized project structure:
+
+```bash
+# In Claude Code, create a new project:
+/new-project my-awesome-app
+
+# This creates:
+~/projects/my-awesome-app/
+├── .claude/              # Claude Code configuration
+│   ├── settings.json     # Project settings
+│   ├── CLAUDE.md        # Project memory
+│   └── commands/        # Custom commands
+├── docs/                # User documentation
+├── working-docs/        # Development notes
+├── src/                 # Source code
+├── tests/               # Test files
+├── README.md           # Project readme
+└── .gitignore          # Git ignore rules
+```
 
 ### Git Configuration
 

@@ -105,13 +105,41 @@ print_info "pipx installed for Python application management"
 
 # Step 4: Install Node.js
 print_info "Installing Node.js 20 LTS..."
-curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
-sudo apt install -y nodejs
 
-# Install yarn globally
-sudo npm install -g yarn
+# Check if Node.js is already installed and the version
+if command -v node &> /dev/null; then
+    NODE_VERSION=$(node --version | grep -oP '\d+' | head -1)
+    if [ "$NODE_VERSION" -ge 20 ]; then
+        print_status "Node.js $(node --version) already installed"
+    else
+        print_info "Upgrading Node.js from $(node --version) to v20.x"
+        # Add NodeSource repository and install
+        curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash - > /dev/null 2>&1
+        sudo apt install -y nodejs > /dev/null 2>&1
+        print_status "Node.js upgraded to $(node --version)"
+    fi
+else
+    # Add NodeSource repository quietly
+    print_info "Adding NodeSource repository..."
+    curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash - > /dev/null 2>&1
+    
+    # Install Node.js
+    print_info "Installing Node.js package..."
+    sudo apt install -y nodejs
+    
+    print_status "Node.js $(node --version) installed"
+fi
 
-print_status "Node.js $(node --version) and npm $(npm --version) installed"
+# Install yarn globally if not already installed
+if ! command -v yarn &> /dev/null; then
+    print_info "Installing Yarn package manager..."
+    sudo npm install -g yarn > /dev/null 2>&1
+    print_status "Yarn installed"
+else
+    print_status "Yarn already installed"
+fi
+
+print_status "Node.js $(node --version) and npm $(npm --version) ready"
 
 # Step 5: Install Docker CLI (if not skipped)
 if [ "$SKIP_DOCKER" != "1" ]; then
@@ -311,7 +339,38 @@ EOF
 
 print_status "Aliases configured"
 
-# Step 13: Test installations
+# Step 13: Install /new-project command for Claude Code
+print_info "Installing /new-project slash command..."
+
+# Create Claude commands directory
+mkdir -p ~/.claude/commands
+mkdir -p ~/.claude/templates
+
+# Download and install the new-project command
+if curl -sSL https://raw.githubusercontent.com/seanGSISG/claude/main/commands/new-project.md -o ~/.claude/commands/new-project.md 2>/dev/null; then
+    print_status "/new-project command installed"
+    
+    # Download project templates
+    TEMPLATES=("settings.json" "CLAUDE.md" ".gitignore" "README.md" "getting-started.md" "development-notes.md")
+    TEMPLATE_COUNT=0
+    
+    for template in "${TEMPLATES[@]}"; do
+        if curl -sSL "https://raw.githubusercontent.com/seanGSISG/claude/main/templates/$template" \
+             -o "$HOME/.claude/templates/$template" 2>/dev/null; then
+            ((TEMPLATE_COUNT++))
+        fi
+    done
+    
+    if [ $TEMPLATE_COUNT -gt 0 ]; then
+        print_status "Downloaded $TEMPLATE_COUNT project templates"
+    else
+        print_info "Templates will be available after pushing to GitHub"
+    fi
+else
+    print_info "Project scaffolding will be available after pushing to GitHub"
+fi
+
+# Step 14: Test installations
 print_info "Running installation tests..."
 echo ""
 echo "Installation Summary:"
@@ -343,14 +402,21 @@ echo ""
 echo "2. Start Claude Code:"
 echo "   claude"
 echo ""
-echo "3. Verify Docker connection:"
+echo "3. Create a new project (after restarting Claude):"
+echo "   /new-project my-awesome-app"
+echo ""
+echo "4. Verify Docker connection:"
 echo "   docker ps"
 echo ""
-echo "4. Your project directory is ready at:"
+echo "5. Your project directory is ready at:"
 echo "   ~/projects"
 echo ""
-echo "5. To update Claude Code in the future:"
+echo "6. To update Claude Code in the future:"
 echo "   claude-update"
+echo ""
+echo "Available Claude Code Commands:"
+echo "  /new-project - Create a new project with standard structure"
+echo "  /help - Show all available commands"
 echo ""
 echo "================================================"
 print_info "Note: You may need to log out and back in for docker group changes to take effect"
