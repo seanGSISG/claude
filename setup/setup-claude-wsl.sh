@@ -387,7 +387,17 @@ print_info "Testing Docker connection..."
 if docker version &>/dev/null; then
     print_status "Docker is connected to Docker Desktop"
 else
-    print_error "Docker connection failed. Please ensure Docker Desktop is running with WSL2 integration enabled"
+    if groups | grep -q docker; then
+        print_info "Docker group configured but not active yet"
+        echo ""
+        echo "  To activate Docker access, run ONE of these:"
+        echo "    1. newgrp docker    (quickest, current session only)"
+        echo "    2. Exit and reopen WSL"
+        echo "    3. Log out and back in"
+        echo ""
+    else
+        print_error "Docker connection failed. Please ensure Docker Desktop is running with WSL2 integration enabled"
+    fi
 fi
 
 # Final instructions
@@ -419,8 +429,9 @@ echo "  /new-project - Create a new project with standard structure"
 echo "  /help - Show all available commands"
 echo ""
 echo "================================================"
-print_info "Note: You may need to log out and back in for docker group changes to take effect"
-print_info "If docker commands fail, run: newgrp docker"
+print_info "Docker Setup Note:"
+print_info "If 'docker ps' shows permission denied, run: newgrp docker"
+print_info "Or exit and reopen WSL for group changes to take effect"
 echo ""
 
 # Create a quick test script

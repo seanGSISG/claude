@@ -86,12 +86,28 @@ SKIP_GIT_CONFIG=1 curl -sSL https://raw.githubusercontent.com/seanGSISG/claude/m
 
 After setup, verify everything is working:
 
+### Quick Test
 ```bash
-# Quick test
 claude --version
+docker ps
+```
 
-# Full verification
+### Comprehensive Verification
+```bash
+# Download and run verification script
 curl -sSL https://raw.githubusercontent.com/seanGSISG/claude/main/scripts/verify-setup.sh | bash
+
+# Or use local verification with auto-fix
+bash scripts/verify-and-fix.sh
+```
+
+### Fix Common Issues
+```bash
+# Fix Docker permissions specifically
+bash scripts/fix-docker-permissions.sh
+
+# Or run comprehensive verification and fixes
+bash scripts/verify-and-fix.sh
 ```
 
 ## 🔧 Configuration
@@ -141,11 +157,36 @@ curl -sSL https://raw.githubusercontent.com/seanGSISG/claude/main/scripts/config
 
 ## 🆘 Troubleshooting
 
-### Docker Issues
-If Docker commands fail:
+### Docker Permission Issues
+If you see "permission denied" errors with Docker:
+
+**Quick Fix (Immediate):**
+```bash
+newgrp docker
+```
+
+**Permanent Fix (Recommended):**
+```bash
+# Exit WSL
+exit
+
+# In PowerShell: shutdown and restart WSL
+wsl --shutdown
+wsl
+
+# Test
+docker ps
+```
+
+**Automated Fix:**
+```bash
+bash scripts/fix-docker-permissions.sh
+```
+
+**Other Docker Issues:**
 1. Ensure Docker Desktop is running
 2. Check WSL2 integration in Docker Desktop settings
-3. Run `newgrp docker` or restart your terminal
+3. Verify your WSL distribution is selected in Docker Desktop
 
 ### Permission Issues
 If you see permission errors:
