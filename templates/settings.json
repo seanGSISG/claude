@@ -1,0 +1,10 @@
+{
+  "env": {
+    "CLAUDE_BASH_MAINTAIN_PROJECT_WORKING_DIR": "true"
+  },
+  "permissions": {
+    "defaultMode": "ask",
+    "allowedTools": ["Read", "Write", "Edit", "Bash", "Glob", "Grep"]
+  },
+  "verbose": false
+}

@@ -81,10 +81,27 @@ if [ ! -f /usr/bin/pip ]; then
     sudo ln -sf /usr/bin/pip3 /usr/bin/pip
 fi
 
-# Upgrade pip
-python -m pip install --upgrade pip
+# Upgrade pip - handle PEP 668 restrictions
+# Ubuntu 24.04 restricts system-wide pip installations
+if python -m pip install --upgrade pip 2>/dev/null; then
+    print_status "pip upgraded successfully"
+else
+    # Try with --user flag
+    if python -m pip install --user --upgrade pip 2>/dev/null; then
+        print_status "pip upgraded for user"
+    else
+        # Use system package manager instead
+        sudo apt install -y python3-pip
+        print_info "Using system pip (upgrade via apt if needed)"
+    fi
+fi
+
+# Install pipx for Python application management (recommended for Ubuntu 24.04)
+sudo apt install -y pipx
+pipx ensurepath
 
 print_status "Python $(python --version) installed"
+print_info "pipx installed for Python application management"
 
 # Step 4: Install Node.js
 print_info "Installing Node.js 20 LTS..."

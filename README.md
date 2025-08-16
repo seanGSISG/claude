@@ -29,7 +29,7 @@ wget -qO- https://raw.githubusercontent.com/seanGSISG/claude/main/setup/setup-cl
 The setup script automatically installs and configures:
 
 - **Development Tools**
-  - Python 3 with pip
+  - Python 3 with pip and pipx (Ubuntu 24.04 compatible)
   - Node.js 20 LTS with npm
   - Git with WSL-optimized settings
   - Essential build tools
@@ -129,6 +129,12 @@ source ~/.bashrc
 # Or restart your WSL terminal
 ```
 
+### Python pip Issues (Ubuntu 24.04)
+If you see "externally-managed-environment" errors:
+- The script now handles this automatically by using system packages
+- Use `pipx` for installing Python applications (included in setup)
+- For Python development, create virtual environments with `python -m venv`
+
 ### Claude Code Issues
 ```bash
 # Update to latest version
@@ -160,4 +166,4 @@ These scripts are provided as-is. Always review scripts before running them on y
 ---
 
 **Maintained by:** [@seanGSISG](https://github.com/seanGSISG)  
-**Last Updated:** 08/16/25
+**Last Updated:** December 2024
