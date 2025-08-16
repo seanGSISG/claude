@@ -2,6 +2,15 @@
 
 # Claude Code WSL2 Setup Script
 # This script sets up a complete development environment with Claude Code in WSL2
+#
+# Environment variables for automation:
+#   GIT_USER_NAME="Your Name"     - Set Git username automatically
+#   GIT_USER_EMAIL="you@email.com" - Set Git email automatically
+#   SKIP_DOCKER=1                  - Skip Docker installation
+#   SKIP_GIT_CONFIG=1              - Skip Git configuration prompts
+#
+# Example:
+#   GIT_USER_NAME="John Doe" GIT_USER_EMAIL="john@example.com" ./setup-claude-wsl.sh
 
 set -e  # Exit on error
 
@@ -87,14 +96,18 @@ sudo npm install -g yarn
 
 print_status "Node.js $(node --version) and npm $(npm --version) installed"
 
-# Step 5: Install Docker CLI
-print_info "Installing Docker CLI for WSL..."
-sudo apt install -y docker.io docker-compose
-
-# Add current user to docker group
-sudo usermod -aG docker $USER
-
-print_status "Docker CLI installed and user added to docker group"
+# Step 5: Install Docker CLI (if not skipped)
+if [ "$SKIP_DOCKER" != "1" ]; then
+    print_info "Installing Docker CLI for WSL..."
+    sudo apt install -y docker.io docker-compose
+    
+    # Add current user to docker group
+    sudo usermod -aG docker $USER
+    
+    print_status "Docker CLI installed and user added to docker group"
+else
+    print_info "Skipping Docker installation (SKIP_DOCKER=1)"
+fi
 
 # Step 6: Configure npm for WSL
 print_info "Configuring npm for WSL environment..."
@@ -187,11 +200,65 @@ print_status "Memory file created"
 
 # Step 10: Configure Git
 print_info "Configuring Git for WSL..."
+
+# Configure line endings for WSL
 git config --global core.autocrlf input
 git config --global core.eol lf
 
 # Set default branch name to main
 git config --global init.defaultBranch main
+
+# Configure Git user if not skipped
+if [ "$SKIP_GIT_CONFIG" != "1" ]; then
+    # Check for environment variables first
+    if [ ! -z "$GIT_USER_NAME" ] && [ ! -z "$GIT_USER_EMAIL" ]; then
+        # Use environment variables if provided
+        git config --global user.name "$GIT_USER_NAME"
+        git config --global user.email "$GIT_USER_EMAIL"
+        print_status "Git configured from environment: $GIT_USER_NAME <$GIT_USER_EMAIL>"
+    else
+        # Check if Git user is already configured
+        EXISTING_NAME=$(git config --global user.name || echo "")
+        EXISTING_EMAIL=$(git config --global user.email || echo "")
+        
+        if [ -z "$EXISTING_NAME" ] || [ -z "$EXISTING_EMAIL" ]; then
+            echo ""
+            echo "Git user configuration is required for commits."
+            echo "Please enter your Git credentials (or press Ctrl+C to skip):"
+            
+            # Prompt for Git user name
+            if [ -z "$EXISTING_NAME" ]; then
+                read -p "Enter your Git username (e.g., 'John Doe'): " INPUT_NAME
+                if [ ! -z "$INPUT_NAME" ]; then
+                    git config --global user.name "$INPUT_NAME"
+                    print_status "Git username set to: $INPUT_NAME"
+                fi
+            else
+                print_status "Git username already configured: $EXISTING_NAME"
+            fi
+            
+            # Prompt for Git email
+            if [ -z "$EXISTING_EMAIL" ]; then
+                read -p "Enter your Git email (e.g., 'user@example.com'): " INPUT_EMAIL
+                if [ ! -z "$INPUT_EMAIL" ]; then
+                    git config --global user.email "$INPUT_EMAIL"
+                    print_status "Git email set to: $INPUT_EMAIL"
+                fi
+            else
+                print_status "Git email already configured: $EXISTING_EMAIL"
+            fi
+        else
+            print_status "Git user already configured: $EXISTING_NAME <$EXISTING_EMAIL>"
+        fi
+    fi
+else
+    print_info "Skipping Git user configuration (SKIP_GIT_CONFIG=1)"
+fi
+
+# Optional: Configure additional Git settings
+git config --global pull.rebase false  # merge (the default strategy)
+git config --global fetch.prune true   # auto-prune deleted remote branches
+git config --global diff.colorMoved zebra  # better diff highlighting
 
 print_status "Git configured for WSL"
 

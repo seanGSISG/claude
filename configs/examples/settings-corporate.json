@@ -1,0 +1,32 @@
+{
+  "env": {
+    "CLAUDE_BASH_MAINTAIN_PROJECT_WORKING_DIR": "true",
+    "NODE_ENV": "production",
+    "HTTP_PROXY": "http://proxy.company.com:8080",
+    "HTTPS_PROXY": "http://proxy.company.com:8080",
+    "NO_PROXY": "localhost,127.0.0.1,.company.internal"
+  },
+  "verbose": false,
+  "theme": "dark",
+  "permissions": {
+    "defaultMode": "ask",
+    "allowedTools": ["Read", "Write", "Edit", "Bash"],
+    "additionalDirectories": [
+      "/mnt/c/Users/username/Documents",
+      "/mnt/d/Projects"
+    ]
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo 'File written' >> ~/.claude/activity.log"
+          }
+        ]
+      }
+    ]
+  }
+}
