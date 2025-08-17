@@ -7,13 +7,15 @@
 ## Project Standards
 - Use TypeScript for all new JavaScript projects
 - Follow PEP 8 for Python code
+- Use Rust formatting (rustfmt) for Rust code
 - Commit messages follow Conventional Commits specification
 - All code must pass linting before commit
 
 ## Preferred Tools
-- Package Manager: npm (not yarn)
-- Python Virtual Environments: venv
-- Testing: Jest for JavaScript, pytest for Python
+- JavaScript Package Managers: npm, bun (for fast execution)
+- Python Virtual Environments: venv, pipx for applications
+- Rust Package Manager: cargo
+- Testing: Jest for JavaScript, pytest for Python, cargo test for Rust
 
 ## Security Notes
 - Never commit .env files

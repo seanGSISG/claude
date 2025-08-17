@@ -141,6 +141,74 @@ fi
 
 print_status "Node.js $(node --version) and npm $(npm --version) ready"
 
+# Step 4.5: Install Bun
+print_info "Installing Bun (JavaScript runtime)..."
+if command -v bun &> /dev/null; then
+    print_status "Bun $(bun --version) already installed"
+else
+    # Install Bun using the official installer
+    curl -fsSL https://bun.sh/install | bash > /dev/null 2>&1
+    
+    # Add Bun to PATH for current session
+    export PATH="$HOME/.bun/bin:$PATH"
+    
+    # Add Bun to .bashrc if not already there
+    if ! grep -q ".bun/bin" ~/.bashrc; then
+        echo 'export PATH="$HOME/.bun/bin:$PATH"' >> ~/.bashrc
+    fi
+    
+    if command -v bun &> /dev/null; then
+        print_status "Bun $(bun --version) installed"
+    else
+        print_error "Bun installation failed"
+    fi
+fi
+
+# Step 4.6: Install Rust
+print_info "Installing Rust (1.70.0 or later)..."
+if command -v rustc &> /dev/null; then
+    RUST_VERSION=$(rustc --version | grep -oP '\d+\.\d+\.\d+')
+    RUST_MAJOR=$(echo $RUST_VERSION | cut -d. -f1)
+    RUST_MINOR=$(echo $RUST_VERSION | cut -d. -f2)
+    
+    # Check if version is 1.70.0 or later
+    if [ "$RUST_MAJOR" -gt 1 ] || ([ "$RUST_MAJOR" -eq 1 ] && [ "$RUST_MINOR" -ge 70 ]); then
+        print_status "Rust $RUST_VERSION already installed (meets 1.70.0+ requirement)"
+    else
+        print_info "Rust $RUST_VERSION found, but 1.70.0+ required. Updating..."
+        rustup update > /dev/null 2>&1
+        print_status "Rust updated to $(rustc --version | grep -oP '\d+\.\d+\.\d+')"
+    fi
+else
+    # Install Rust using rustup
+    print_info "Downloading and installing Rust toolchain..."
+    curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y > /dev/null 2>&1
+    
+    # Source cargo environment
+    source $HOME/.cargo/env
+    
+    # Add cargo to PATH for .bashrc if not already there
+    if ! grep -q ".cargo/env" ~/.bashrc; then
+        echo 'source $HOME/.cargo/env' >> ~/.bashrc
+    fi
+    
+    if command -v rustc &> /dev/null; then
+        RUST_VERSION=$(rustc --version | grep -oP '\d+\.\d+\.\d+')
+        print_status "Rust $RUST_VERSION installed"
+        
+        # Verify version meets requirement
+        RUST_MAJOR=$(echo $RUST_VERSION | cut -d. -f1)
+        RUST_MINOR=$(echo $RUST_VERSION | cut -d. -f2)
+        if [ "$RUST_MAJOR" -gt 1 ] || ([ "$RUST_MAJOR" -eq 1 ] && [ "$RUST_MINOR" -ge 70 ]); then
+            print_status "Rust version meets 1.70.0+ requirement"
+        else
+            print_error "Rust $RUST_VERSION installed but 1.70.0+ required"
+        fi
+    else
+        print_error "Rust installation failed"
+    fi
+fi
+
 # Step 5: Install Docker CLI (if not skipped)
 if [ "$SKIP_DOCKER" != "1" ]; then
     print_info "Installing Docker CLI for WSL..."
@@ -220,6 +288,8 @@ You are running in Ubuntu 24.04 LTS on WSL2 (Windows Subsystem for Linux).
 - **Python**: $(python3 --version 2>/dev/null || echo "Python 3")
 - **Node.js**: $(node --version 2>/dev/null || echo "v20.x")
 - **npm**: $(npm --version 2>/dev/null || echo "10.x")
+- **Bun**: $(bun --version 2>/dev/null || echo "latest") - Fast JavaScript runtime
+- **Rust**: $(rustc --version 2>/dev/null | grep -oP '\d+\.\d+\.\d+' || echo "1.70.0+") - Systems programming language
 - **Docker**: CLI connected to Docker Desktop
 - **Git**: $(git --version 2>/dev/null || echo "latest")
 
@@ -330,6 +400,14 @@ alias dpsa='docker ps -a'
 alias dim='docker images'
 alias dex='docker exec -it'
 
+# Rust Aliases
+alias cargo-update='rustup update'
+alias rust-version='rustc --version'
+
+# JavaScript Runtime Aliases
+alias node-version='node --version && npm --version'
+alias bun-version='bun --version'
+
 # Navigation
 alias projects='cd ~/projects'
 
@@ -378,6 +456,8 @@ echo "===================="
 echo "Python:      $(python --version 2>&1 | grep -oP '\d+\.\d+\.\d+' || echo 'Not found')"
 echo "Node.js:     $(node --version 2>&1 || echo 'Not found')"
 echo "npm:         $(npm --version 2>&1 || echo 'Not found')"
+echo "Bun:         $(bun --version 2>&1 || echo 'Not found')"
+echo "Rust:        $(rustc --version 2>&1 | grep -oP '\d+\.\d+\.\d+' || echo 'Not found')"
 echo "Docker CLI:  $(docker --version 2>&1 | grep -oP '\d+\.\d+\.\d+' || echo 'Not found')"
 echo "Claude Code: $(claude --version 2>&1 || echo 'Not found')"
 echo ""
@@ -442,11 +522,18 @@ echo "================================="
 echo "Python: $(python --version)"
 echo "Node.js: $(node --version)"
 echo "npm: $(npm --version)"
+echo "Bun: $(bun --version 2>&1 || echo 'Not installed')"
+echo "Rust: $(rustc --version 2>&1 || echo 'Not installed')"
+echo "Cargo: $(cargo --version 2>&1 || echo 'Not installed')"
 echo "Docker: $(docker --version 2>&1 || echo 'Not connected')"
 echo "Claude: $(claude --version 2>&1 || echo 'Not installed')"
 echo ""
 echo "Docker Daemon Status:"
 docker version &>/dev/null && echo "✓ Connected to Docker Desktop" || echo "✗ Not connected"
+echo ""
+echo "Language Runtime Status:"
+bun --version &>/dev/null && echo "✓ Bun runtime available" || echo "✗ Bun not available"
+rustc --version &>/dev/null && echo "✓ Rust compiler available" || echo "✗ Rust not available"
 EOF
 
 chmod +x ~/scripts/test-environment.sh

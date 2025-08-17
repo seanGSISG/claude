@@ -35,6 +35,8 @@ The setup script automatically installs and configures:
 - **Development Tools**
   - Python 3 with pip and pipx (Ubuntu 24.04 compatible)
   - Node.js 20 LTS with npm
+  - Bun (latest) - Fast JavaScript runtime
+  - Rust (1.70.0+) with Cargo package manager
   - Git with WSL-optimized settings
   - Essential build tools
 
@@ -90,6 +92,8 @@ After setup, verify everything is working:
 ```bash
 claude --version
 docker ps
+bun --version
+rustc --version
 ```
 
 ### Comprehensive Verification
