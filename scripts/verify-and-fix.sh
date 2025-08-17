@@ -90,6 +90,7 @@ check_command npm "npm"
 check_command bun "Bun"
 check_command rustc "Rust (rustc)"
 check_command cargo "Cargo (Rust package manager)"
+check_command gh "GitHub CLI"
 check_command git "Git"
 check_command claude "Claude Code"
 

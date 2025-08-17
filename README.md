@@ -37,6 +37,7 @@ The setup script automatically installs and configures:
   - Node.js 20 LTS with npm
   - Bun (latest) - Fast JavaScript runtime
   - Rust (1.70.0+) with Cargo package manager
+  - GitHub CLI (gh) - GitHub command line tools
   - Git with WSL-optimized settings
   - Essential build tools
 
@@ -94,6 +95,7 @@ claude --version
 docker ps
 bun --version
 rustc --version
+gh --version
 ```
 
 ### Comprehensive Verification

@@ -32,6 +32,27 @@ print_info() {
 }
 
 echo ""
+
+# Check GitHub CLI
+print_header "GitHub CLI"
+if command -v gh &> /dev/null; then
+    GH_VERSION=$(gh --version | head -n1 | awk '{print $3}')
+    print_status "GitHub CLI installed: $GH_VERSION"
+    
+    # Check if authenticated
+    if gh auth status &> /dev/null; then
+        print_status "GitHub authentication configured"
+    else
+        print_warning "GitHub CLI not authenticated"
+        print_info "Run 'gh auth login' to authenticate with GitHub"
+    fi
+else
+    print_error "GitHub CLI not installed"
+    echo ""
+    print_info "To install GitHub CLI manually:"
+    echo "sudo apt update"
+    echo "sudo apt install gh"
+fi
 print_header "Language Runtime Verification"
 echo ""
 

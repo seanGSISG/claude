@@ -209,6 +209,28 @@ else
     fi
 fi
 
+# Step 4.7: Install GitHub CLI
+print_info "Installing GitHub CLI (gh)..."
+if command -v gh &> /dev/null; then
+    print_status "GitHub CLI $(gh --version | head -n1 | awk '{print $3}') already installed"
+else
+    # Add GitHub CLI repository
+    print_info "Adding GitHub CLI repository..."
+    curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg > /dev/null 2>&1
+    sudo chmod go+r /usr/share/keyrings/githubcli-archive-keyring.gpg
+    echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null
+    
+    # Update package list and install
+    sudo apt update > /dev/null 2>&1
+    sudo apt install -y gh > /dev/null 2>&1
+    
+    if command -v gh &> /dev/null; then
+        print_status "GitHub CLI $(gh --version | head -n1 | awk '{print $3}') installed"
+    else
+        print_error "GitHub CLI installation failed"
+    fi
+fi
+
 # Step 5: Install Docker CLI (if not skipped)
 if [ "$SKIP_DOCKER" != "1" ]; then
     print_info "Installing Docker CLI for WSL..."
@@ -290,6 +312,7 @@ You are running in Ubuntu 24.04 LTS on WSL2 (Windows Subsystem for Linux).
 - **npm**: $(npm --version 2>/dev/null || echo "10.x")
 - **Bun**: $(bun --version 2>/dev/null || echo "latest") - Fast JavaScript runtime
 - **Rust**: $(rustc --version 2>/dev/null | grep -oP '\d+\.\d+\.\d+' || echo "1.70.0+") - Systems programming language
+- **GitHub CLI**: $(gh --version 2>/dev/null | head -n1 | awk '{print $3}' || echo "latest") - GitHub command line tools
 - **Docker**: CLI connected to Docker Desktop
 - **Git**: $(git --version 2>/dev/null || echo "latest")
 
@@ -394,6 +417,16 @@ alias claude-update='npm update -g @anthropic-ai/claude-code'
 alias claude-config='nano ~/.claude/settings.json'
 alias claude-memory='nano ~/.claude/CLAUDE.md'
 
+# Git & GitHub Aliases
+alias gst='git status'
+alias gco='git checkout'
+alias gcm='git commit -m'
+alias gp='git push'
+alias gl='git pull'
+alias ghpr='gh pr create'
+alias ghpv='gh pr view'
+alias ghis='gh issue create'
+
 # Docker Aliases
 alias dps='docker ps'
 alias dpsa='docker ps -a'
@@ -458,6 +491,7 @@ echo "Node.js:     $(node --version 2>&1 || echo 'Not found')"
 echo "npm:         $(npm --version 2>&1 || echo 'Not found')"
 echo "Bun:         $(bun --version 2>&1 || echo 'Not found')"
 echo "Rust:        $(rustc --version 2>&1 | grep -oP '\d+\.\d+\.\d+' || echo 'Not found')"
+echo "GitHub CLI:  $(gh --version 2>&1 | head -n1 | awk '{print $3}' || echo 'Not found')"
 echo "Docker CLI:  $(docker --version 2>&1 | grep -oP '\d+\.\d+\.\d+' || echo 'Not found')"
 echo "Claude Code: $(claude --version 2>&1 || echo 'Not found')"
 echo ""
@@ -525,6 +559,7 @@ echo "npm: $(npm --version)"
 echo "Bun: $(bun --version 2>&1 || echo 'Not installed')"
 echo "Rust: $(rustc --version 2>&1 || echo 'Not installed')"
 echo "Cargo: $(cargo --version 2>&1 || echo 'Not installed')"
+echo "GitHub CLI: $(gh --version 2>&1 | head -n1 || echo 'Not installed')"
 echo "Docker: $(docker --version 2>&1 || echo 'Not connected')"
 echo "Claude: $(claude --version 2>&1 || echo 'Not installed')"
 echo ""
@@ -534,6 +569,7 @@ echo ""
 echo "Language Runtime Status:"
 bun --version &>/dev/null && echo "✓ Bun runtime available" || echo "✗ Bun not available"
 rustc --version &>/dev/null && echo "✓ Rust compiler available" || echo "✗ Rust not available"
+gh --version &>/dev/null && echo "✓ GitHub CLI available" || echo "✗ GitHub CLI not available"
 EOF
 
 chmod +x ~/scripts/test-environment.sh
