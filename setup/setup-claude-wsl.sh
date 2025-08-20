@@ -122,11 +122,11 @@ else
     # Add NodeSource repository quietly
     print_info "Adding NodeSource repository..."
     curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash - > /dev/null 2>&1
-    
+
     # Install Node.js
     print_info "Installing Node.js package..."
     sudo apt install -y nodejs
-    
+
     print_status "Node.js $(node --version) installed"
 fi
 
@@ -148,15 +148,15 @@ if command -v bun &> /dev/null; then
 else
     # Install Bun using the official installer
     curl -fsSL https://bun.sh/install | bash > /dev/null 2>&1
-    
+
     # Add Bun to PATH for current session
     export PATH="$HOME/.bun/bin:$PATH"
-    
+
     # Add Bun to .bashrc if not already there
     if ! grep -q ".bun/bin" ~/.bashrc; then
         echo 'export PATH="$HOME/.bun/bin:$PATH"' >> ~/.bashrc
     fi
-    
+
     if command -v bun &> /dev/null; then
         print_status "Bun $(bun --version) installed"
     else
@@ -170,7 +170,7 @@ if command -v rustc &> /dev/null; then
     RUST_VERSION=$(rustc --version | grep -oP '\d+\.\d+\.\d+')
     RUST_MAJOR=$(echo $RUST_VERSION | cut -d. -f1)
     RUST_MINOR=$(echo $RUST_VERSION | cut -d. -f2)
-    
+
     # Check if version is 1.70.0 or later
     if [ "$RUST_MAJOR" -gt 1 ] || ([ "$RUST_MAJOR" -eq 1 ] && [ "$RUST_MINOR" -ge 70 ]); then
         print_status "Rust $RUST_VERSION already installed (meets 1.70.0+ requirement)"
@@ -183,19 +183,19 @@ else
     # Install Rust using rustup
     print_info "Downloading and installing Rust toolchain..."
     curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y > /dev/null 2>&1
-    
+
     # Source cargo environment
     source $HOME/.cargo/env
-    
+
     # Add cargo to PATH for .bashrc if not already there
     if ! grep -q ".cargo/env" ~/.bashrc; then
         echo 'source $HOME/.cargo/env' >> ~/.bashrc
     fi
-    
+
     if command -v rustc &> /dev/null; then
         RUST_VERSION=$(rustc --version | grep -oP '\d+\.\d+\.\d+')
         print_status "Rust $RUST_VERSION installed"
-        
+
         # Verify version meets requirement
         RUST_MAJOR=$(echo $RUST_VERSION | cut -d. -f1)
         RUST_MINOR=$(echo $RUST_VERSION | cut -d. -f2)
@@ -219,11 +219,11 @@ else
     curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg > /dev/null 2>&1
     sudo chmod go+r /usr/share/keyrings/githubcli-archive-keyring.gpg
     echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null
-    
+
     # Update package list and install
     sudo apt update > /dev/null 2>&1
     sudo apt install -y gh > /dev/null 2>&1
-    
+
     if command -v gh &> /dev/null; then
         print_status "GitHub CLI $(gh --version | head -n1 | awk '{print $3}') installed"
     else
@@ -235,10 +235,10 @@ fi
 if [ "$SKIP_DOCKER" != "1" ]; then
     print_info "Installing Docker CLI for WSL..."
     sudo apt install -y docker.io docker-compose
-    
+
     # Add current user to docker group
     sudo usermod -aG docker $USER
-    
+
     print_status "Docker CLI installed and user added to docker group"
 else
     print_info "Skipping Docker installation (SKIP_DOCKER=1)"
@@ -358,12 +358,12 @@ if [ "$SKIP_GIT_CONFIG" != "1" ]; then
         # Check if Git user is already configured
         EXISTING_NAME=$(git config --global user.name || echo "")
         EXISTING_EMAIL=$(git config --global user.email || echo "")
-        
+
         if [ -z "$EXISTING_NAME" ] || [ -z "$EXISTING_EMAIL" ]; then
             echo ""
             echo "Git user configuration is required for commits."
             echo "Please enter your Git credentials (or press Ctrl+C to skip):"
-            
+
             # Prompt for Git user name
             if [ -z "$EXISTING_NAME" ]; then
                 read -p "Enter your Git username (e.g., 'John Doe'): " INPUT_NAME
@@ -374,7 +374,7 @@ if [ "$SKIP_GIT_CONFIG" != "1" ]; then
             else
                 print_status "Git username already configured: $EXISTING_NAME"
             fi
-            
+
             # Prompt for Git email
             if [ -z "$EXISTING_EMAIL" ]; then
                 read -p "Enter your Git email (e.g., 'user@example.com'): " INPUT_EMAIL
@@ -416,6 +416,7 @@ cat >> ~/.bashrc << 'EOF'
 alias claude-update='npm update -g @anthropic-ai/claude-code'
 alias claude-config='nano ~/.claude/settings.json'
 alias claude-memory='nano ~/.claude/CLAUDE.md'
+alias claude-statusline='npx ccstatusline@latest'
 
 # Git & GitHub Aliases
 alias gst='git status'
@@ -452,15 +453,24 @@ alias explorer='explorer.exe .'
 # ===========================================
 
 # Quick activation aliases
+alias global-env='source ~/venvs/global/bin/activate'
 alias ai-env='source ~/venvs/ai-ml/bin/activate'
-alias dev-env='source ~/venvs/dev/bin/activate' 
+alias dev-env='source ~/venvs/dev/bin/activate'
 alias web-env='source ~/venvs/web/bin/activate'
+
+# Create a global Python virtual environment if it doesn't exist
+if [ ! -d "$HOME/venvs/global" ]; then
+    echo "[i] Creating global Python virtual environment at ~/venvs/global..."
+    mkdir -p "$HOME/venvs"
+    python3 -m venv "$HOME/venvs/global"
+    echo "[✓] Global Python virtual environment created. Activate with: source ~/venvs/global/bin/activate"
+fi
 
 # Virtual Environment Management Functions
 list-venvs() {
     echo "=== Virtual Environments ==="
     echo ""
-    
+
     echo "📁 Centralized venvs (~venvs/):"
     if [ -d ~/venvs ]; then
         for venv in ~/venvs/*/; do
@@ -477,7 +487,7 @@ list-venvs() {
     else
         echo "  (none found)"
     fi
-    
+
     echo ""
     echo "📂 Project-specific venvs:"
     find ~/projects -name "venv" -o -name ".venv" -type d 2>/dev/null | while read venv_path; do
@@ -485,7 +495,7 @@ list-venvs() {
         venv_name=$(basename "$venv_path")
         echo "  📂 $project_name/$venv_name"
     done
-    
+
     echo ""
     if [ -n "$VIRTUAL_ENV" ]; then
         echo "🟢 Currently active: $(basename "$VIRTUAL_ENV")"
@@ -508,12 +518,13 @@ activate-venv() {
         fi
         echo ""
         echo "Quick aliases:"
+        echo "  ai-global  - Activate global environment"
         echo "  ai-env  - Activate AI/ML environment"
-        echo "  dev-env - Activate development environment" 
+        echo "  dev-env - Activate development environment"
         echo "  web-env - Activate web development environment"
         return 1
     fi
-    
+
     if [ -d ~/venvs/$1 ]; then
         source ~/venvs/$1/bin/activate
         echo "🟢 Activated: $1"
@@ -536,15 +547,15 @@ create-venv() {
         echo "📁 Will be created at: ~/venvs/<environment-name>"
         return 1
     fi
-    
+
     if [ -d ~/venvs/$1 ]; then
         echo "❌ Virtual environment '$1' already exists"
         return 1
     fi
-    
+
     # Create venvs directory if it doesn't exist
     mkdir -p ~/venvs
-    
+
     echo "🔧 Creating virtual environment: $1"
     python3 -m venv ~/venvs/$1
     echo "✅ Created: ~/venvs/$1"
@@ -558,21 +569,21 @@ remove-venv() {
         echo "⚠️  This will permanently delete the virtual environment"
         return 1
     fi
-    
+
     if [ ! -d ~/venvs/$1 ]; then
         echo "❌ Virtual environment '$1' not found"
         return 1
     fi
-    
+
     if [ "$VIRTUAL_ENV" = "$HOME/venvs/$1" ]; then
         echo "⚠️  Cannot remove currently active environment. Deactivate first."
         return 1
     fi
-    
+
     echo "⚠️  About to remove virtual environment: $1"
     echo "📁 Location: ~/venvs/$1"
     read -p "Are you sure? (y/N): " confirm
-    
+
     if [[ "$confirm" =~ ^[Yy]$ ]]; then
         rm -rf ~/venvs/$1
         echo "🗑️  Removed: $1"
@@ -592,7 +603,7 @@ venv-info() {
         echo ""
         echo "📋 Installed packages:"
         pip list --format=columns | head -20
-        
+
         total_packages=$(pip list | wc -l)
         if [ $total_packages -gt 20 ]; then
             echo "  ... and $((total_packages - 20)) more packages"
@@ -605,6 +616,45 @@ venv-info() {
     fi
 }
 
+# List all custom aliases with descriptions in a table
+list_aliases() {
+    echo -e "\n\033[1mAvailable Aliases:\033[0m"
+    printf "%-20s | %-60s\n" "Alias" "Description"
+    printf "%-20s | %-60s\n" "--------------------" "------------------------------------------------------------"
+    printf "%-20s | %-60s\n" "claude-update" "Update Claude Code globally"
+    printf "%-20s | %-60s\n" "claude-config" "Edit Claude Code settings"
+    printf "%-20s | %-60s\n" "claude-memory" "Edit Claude Code memory file"
+    printf "%-20s | %-60s\n" "claude-statusline" "Claude Code with powerline support, themes, and more"
+    printf "%-20s | %-60s\n" "gst" "Show git status"
+    printf "%-20s | %-60s\n" "gco" "Git checkout branch"
+    printf "%-20s | %-60s\n" "gcm" "Git commit with message"
+    printf "%-20s | %-60s\n" "gp" "Git push"
+    printf "%-20s | %-60s\n" "gl" "Git pull"
+    printf "%-20s | %-60s\n" "ghpr" "Create GitHub pull request"
+    printf "%-20s | %-60s\n" "ghpv" "View GitHub pull request"
+    printf "%-20s | %-60s\n" "ghis" "Create GitHub issue"
+    printf "%-20s | %-60s\n" "dps" "List running Docker containers"
+    printf "%-20s | %-60s\n" "dpsa" "List all Docker containers"
+    printf "%-20s | %-60s\n" "dim" "List Docker images"
+    printf "%-20s | %-60s\n" "dex" "Exec into Docker container"
+    printf "%-20s | %-60s\n" "cargo-update" "Update Rust toolchain"
+    printf "%-20s | %-60s\n" "rust-version" "Show Rust compiler version"
+    printf "%-20s | %-60s\n" "node-version" "Show Node.js and npm version"
+    printf "%-20s | %-60s\n" "bun-version" "Show Bun runtime version"
+    printf "%-20s | %-60s\n" "projects" "Go to projects directory"
+    printf "%-20s | %-60s\n" "explorer" "Open current directory in Windows Explorer"
+    printf "%-20s | %-60s\n" "venvs" "List all Python virtual environments"
+    printf "%-20s | %-60s\n" "ai-env" "Activate AI/ML Python environment"
+    printf "%-20s | %-60s\n" "global-env" "Activate global Python environment"
+    printf "%-20s | %-60s\n" "dev-env" "Activate development Python environment"
+    printf "%-20s | %-60s\n" "web-env" "Activate web Python environment"
+    printf "%-20s | %-60s\n" "activate-venv" "Activate named Python virtual environment"
+    printf "%-20s | %-60s\n" "create-venv" "Create new Python virtual environment"
+    printf "%-20s | %-60s\n" "remove-venv" "Remove Python virtual environment"
+    printf "%-20s | %-60s\n" "venv-info" "Show info about active Python environment"
+    echo ""
+}
+alias aliases='list_aliases'
 EOF
 
 print_status "Aliases configured"
@@ -619,18 +669,18 @@ mkdir -p ~/.claude/templates
 # Download and install the new-project command
 if curl -sSL https://raw.githubusercontent.com/seanGSISG/claude/main/commands/new-project.md -o ~/.claude/commands/new-project.md 2>/dev/null; then
     print_status "/new-project command installed"
-    
+
     # Download project templates
     TEMPLATES=("settings.json" "CLAUDE.md" ".gitignore" "README.md" "getting-started.md" "development-notes.md")
     TEMPLATE_COUNT=0
-    
+
     for template in "${TEMPLATES[@]}"; do
         if curl -sSL "https://raw.githubusercontent.com/seanGSISG/claude/main/templates/$template" \
              -o "$HOME/.claude/templates/$template" 2>/dev/null; then
             ((TEMPLATE_COUNT++))
         fi
     done
-    
+
     if [ $TEMPLATE_COUNT -gt 0 ]; then
         print_status "Downloaded $TEMPLATE_COUNT project templates"
     else
@@ -691,7 +741,7 @@ echo ""
 echo "4. Virtual Environment Quick Commands:"
 echo "   venvs                      # List all virtual environments"
 echo "   create-venv ai-ml          # Create AI/ML environment"
-echo "   ai-env                     # Activate AI/ML environment" 
+echo "   ai-env                     # Activate AI/ML environment"
 echo "   activate-venv <name>       # Activate specific environment"
 echo "   venv-info                  # Show current environment info"
 echo ""
