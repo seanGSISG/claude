@@ -446,6 +446,165 @@ alias projects='cd ~/projects'
 
 # WSL Specific
 alias explorer='explorer.exe .'
+
+# ===========================================
+# Python Virtual Environment Management
+# ===========================================
+
+# Quick activation aliases
+alias ai-env='source ~/venvs/ai-ml/bin/activate'
+alias dev-env='source ~/venvs/dev/bin/activate' 
+alias web-env='source ~/venvs/web/bin/activate'
+
+# Virtual Environment Management Functions
+list-venvs() {
+    echo "=== Virtual Environments ==="
+    echo ""
+    
+    echo "📁 Centralized venvs (~venvs/):"
+    if [ -d ~/venvs ]; then
+        for venv in ~/venvs/*/; do
+            if [ -d "$venv" ]; then
+                name=$(basename "$venv")
+                if [ -f "$venv/pyvenv.cfg" ]; then
+                    python_version=$(grep "version" "$venv/pyvenv.cfg" | cut -d' ' -f3 2>/dev/null || echo "unknown")
+                    echo "  📦 $name (Python $python_version)"
+                else
+                    echo "  📦 $name"
+                fi
+            fi
+        done
+    else
+        echo "  (none found)"
+    fi
+    
+    echo ""
+    echo "📂 Project-specific venvs:"
+    find ~/projects -name "venv" -o -name ".venv" -type d 2>/dev/null | while read venv_path; do
+        project_name=$(dirname "$venv_path" | xargs basename)
+        venv_name=$(basename "$venv_path")
+        echo "  📂 $project_name/$venv_name"
+    done
+    
+    echo ""
+    if [ -n "$VIRTUAL_ENV" ]; then
+        echo "🟢 Currently active: $(basename "$VIRTUAL_ENV")"
+    else
+        echo "⚪ No virtual environment currently active"
+    fi
+}
+
+# Alias for quick access
+alias venvs='list-venvs'
+
+# Enhanced activation function
+activate-venv() {
+    if [ -z "$1" ]; then
+        echo "💡 Usage: activate-venv <environment-name>"
+        echo ""
+        echo "Available environments:"
+        if [ -d ~/venvs ]; then
+            ls -1 ~/venvs/ | sed 's/^/  /'
+        fi
+        echo ""
+        echo "Quick aliases:"
+        echo "  ai-env  - Activate AI/ML environment"
+        echo "  dev-env - Activate development environment" 
+        echo "  web-env - Activate web development environment"
+        return 1
+    fi
+    
+    if [ -d ~/venvs/$1 ]; then
+        source ~/venvs/$1/bin/activate
+        echo "🟢 Activated: $1"
+        echo "📍 Location: ~/venvs/$1"
+    else
+        echo "❌ Virtual environment '$1' not found"
+        echo ""
+        echo "Available environments:"
+        if [ -d ~/venvs ]; then
+            ls -1 ~/venvs/ | sed 's/^/  /'
+        fi
+        return 1
+    fi
+}
+
+# Create new virtual environment
+create-venv() {
+    if [ -z "$1" ]; then
+        echo "💡 Usage: create-venv <environment-name>"
+        echo "📁 Will be created at: ~/venvs/<environment-name>"
+        return 1
+    fi
+    
+    if [ -d ~/venvs/$1 ]; then
+        echo "❌ Virtual environment '$1' already exists"
+        return 1
+    fi
+    
+    # Create venvs directory if it doesn't exist
+    mkdir -p ~/venvs
+    
+    echo "🔧 Creating virtual environment: $1"
+    python3 -m venv ~/venvs/$1
+    echo "✅ Created: ~/venvs/$1"
+    echo "🚀 Activate with: activate-venv $1 or source ~/venvs/$1/bin/activate"
+}
+
+# Remove virtual environment
+remove-venv() {
+    if [ -z "$1" ]; then
+        echo "💡 Usage: remove-venv <environment-name>"
+        echo "⚠️  This will permanently delete the virtual environment"
+        return 1
+    fi
+    
+    if [ ! -d ~/venvs/$1 ]; then
+        echo "❌ Virtual environment '$1' not found"
+        return 1
+    fi
+    
+    if [ "$VIRTUAL_ENV" = "$HOME/venvs/$1" ]; then
+        echo "⚠️  Cannot remove currently active environment. Deactivate first."
+        return 1
+    fi
+    
+    echo "⚠️  About to remove virtual environment: $1"
+    echo "📁 Location: ~/venvs/$1"
+    read -p "Are you sure? (y/N): " confirm
+    
+    if [[ "$confirm" =~ ^[Yy]$ ]]; then
+        rm -rf ~/venvs/$1
+        echo "🗑️  Removed: $1"
+    else
+        echo "❌ Cancelled"
+    fi
+}
+
+# Show virtual environment info
+venv-info() {
+    if [ -n "$VIRTUAL_ENV" ]; then
+        echo "🟢 Active Virtual Environment:"
+        echo "  📦 Name: $(basename "$VIRTUAL_ENV")"
+        echo "  📁 Path: $VIRTUAL_ENV"
+        echo "  🐍 Python: $(python --version)"
+        echo "  📦 Pip: $(pip --version | cut -d' ' -f1-2)"
+        echo ""
+        echo "📋 Installed packages:"
+        pip list --format=columns | head -20
+        
+        total_packages=$(pip list | wc -l)
+        if [ $total_packages -gt 20 ]; then
+            echo "  ... and $((total_packages - 20)) more packages"
+            echo "  💡 Run 'pip list' to see all packages"
+        fi
+    else
+        echo "⚪ No virtual environment is currently active"
+        echo "💡 Use 'activate-venv <name>' to activate one"
+        echo "💡 Use 'venvs' to list available environments"
+    fi
+}
+
 EOF
 
 print_status "Aliases configured"
@@ -529,20 +688,44 @@ echo ""
 echo "3. Create a new project (after restarting Claude):"
 echo "   /new-project my-awesome-app"
 echo ""
-echo "4. Verify Docker connection:"
+echo "4. Virtual Environment Quick Commands:"
+echo "   venvs                      # List all virtual environments"
+echo "   create-venv ai-ml          # Create AI/ML environment"
+echo "   ai-env                     # Activate AI/ML environment" 
+echo "   activate-venv <name>       # Activate specific environment"
+echo "   venv-info                  # Show current environment info"
+echo ""
+echo "5. Install Python packages (example):"
+echo "   ai-env                     # Activate AI/ML environment"
+echo "   pip install unsloth torch # Install packages safely"
+echo ""
+echo "6. Verify Docker connection:"
 echo "   docker ps"
 echo ""
-echo "5. Your project directory is ready at:"
+echo "7. Your project directory is ready at:"
 echo "   ~/projects"
 echo ""
-echo "6. To update Claude Code in the future:"
+echo "8. To update Claude Code in the future:"
 echo "   claude-update"
 echo ""
 echo "Available Claude Code Commands:"
 echo "  /new-project - Create a new project with standard structure"
 echo "  /help - Show all available commands"
 echo ""
+echo "Virtual Environment Management:"
+echo "  venvs        - List all available environments"
+echo "  ai-env       - Quick activate AI/ML environment"
+echo "  dev-env      - Quick activate development environment"
+echo "  web-env      - Quick activate web development environment"
+echo "  create-venv  - Create new virtual environment"
+echo "  remove-venv  - Remove virtual environment"
+echo "  venv-info    - Show active environment details"
+echo ""
 echo "================================================"
+print_info "Python Package Installation:"
+print_info "Always activate a virtual environment before installing packages!"
+print_info "Example: ai-env && pip install unsloth"
+echo ""
 print_info "Docker Setup Note:"
 print_info "If 'docker ps' shows permission denied, run: newgrp docker"
 print_info "Or exit and reopen WSL for group changes to take effect"
